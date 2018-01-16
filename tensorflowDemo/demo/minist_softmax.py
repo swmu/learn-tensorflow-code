@@ -9,13 +9,13 @@ def main(data_dir):
     mnist = input_data.read_data_sets(data_dir, one_hot=True)
 
     #  y = wx +b
-    x = tf.placeholder(tf.float32, [None, 784])
+    x = tf.placeholder(tf.float32, [None, 784], name="x")
     w = tf.Variable(tf.zeros([784,10]))
     b = tf.Variable(tf.zeros([10]))
 
     y = tf.matmul(x, w) + b
 
-    y_ = tf.placeholder(tf.float32, [None, 10])
+    y_ = tf.placeholder(tf.float32, [None, 10], name="y")
 
     # loss函数, 获取结果为[n_class]的向量
     loss = tf.nn.softmax_cross_entropy_with_logits(labels=y_,logits=y)
@@ -28,6 +28,8 @@ def main(data_dir):
     # 设置loss函数最优化
     train_step = tf.train.GradientDescentOptimizer(0.5).minimize(cross_entrop)
 
+    # 申明tf.train.Saver用于保存模型
+    saver = tf.train.Saver()
     # 如上部分是构建了一个图， 如下部分是需要把图进行运行以便达到训练的目的
 
     with tf.Session() as sess:
@@ -36,16 +38,17 @@ def main(data_dir):
         # 开始训练
         # 表示循环训练1000次
         for i in range(1000):
+          print(i)
           # 每一个批次100条数据
           batch_xs, batch_ys = mnist.train.next_batch(100)
           sess.run(train_step, feed_dict={x: batch_xs, y_: batch_ys})
-
+        saver_path = saver.save(sess, "./model/minist.ckpt")
+        print(saver_path)
         # Test trained model
         correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(y_, 1))
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-        print(sess.run(accuracy, feed_dict={x: mnist.test.images,
-                                            y_: mnist.test.labels}))
-        print(accuracy.eval(feed_dict={x: mnist.test.images, y_: mnist.test.labels}))
+
+        print(sess.run(accuracy, feed_dict={x: mnist.test.images,y_: mnist.test.labels}))
 
 
 if __name__ == '__main__':
